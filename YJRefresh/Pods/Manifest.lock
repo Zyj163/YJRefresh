@@ -1,0 +1,21 @@
+PODS:
+  - Alamofire (4.4.0)
+  - HandyJSON (1.7.1)
+  - MJRefresh (3.1.12)
+  - SnapKit (3.2.0)
+
+DEPENDENCIES:
+  - Alamofire
+  - HandyJSON
+  - MJRefresh
+  - SnapKit
+
+SPEC CHECKSUMS:
+  Alamofire: dc44b1600b800eb63da6a19039a0083d62a6a62d
+  HandyJSON: 54b6ce942795f7b2e61b82fe73cf25d9f139d125
+  MJRefresh: b96cdb21c4aa75a7b07654311ab2f315c497e806
+  SnapKit: 1ca44df72cfa543218d177cb8aab029d10d86ea7
+
+PODFILE CHECKSUM: 8756bc98a27f01973cd3a0a5f366b7da3c930383
+
+COCOAPODS: 1.2.1
