@@ -39,21 +39,26 @@ extension YJTableViewController {
         }
         tableView?.mj_header = MJRefreshNormalHeader(refreshingBlock: { [weak self] in
             
-            self?.viewModel?.refresh(0, configMap: { (mapping) in
-                mapping.datas = "result"
-                mapping.data = "initCustomer"
-            }, { (response) in
-                self?.tableView?.mj_header.endRefreshing()
-                
-                switch response.code {
-                case .success:
-                    print("success")
-                default:
-                    print("fail")
-                }
-            })
-            
+            self?.refresh(0)
         })
     }
     
+    func refresh(_ start: Int) {
+        YJNet.request(router: .main(10), configMap: { (mapping) in
+            mapping.datas = "result"
+            mapping.data = "initCustomer"
+        }, completion: {[weak self] (response: YJResponse<YJModel>) in
+            
+            self?.viewModel?.defalutDealWithResponse(start, response: response)
+            
+            self?.tableView?.mj_header.endRefreshing()
+            
+            switch response.code {
+            case .success:
+                print("success")
+            default:
+                print("fail")
+            }
+        })
+    }
 }

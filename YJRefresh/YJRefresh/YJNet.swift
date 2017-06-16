@@ -9,7 +9,7 @@
 import Alamofire
 import HandyJSON
 
-enum YJStatusCode: Int {
+public enum YJStatusCode: Int {
     case unknown
     case success
     case fail
@@ -23,23 +23,23 @@ fileprivate struct YJOriginalResponse: YJModelable {
     var other: [String: Any]?
 }
 
-class YJMapping {
-    var data: String?
-    var datas: String?
+public class YJMapping {
+    public var data: String?
+    public var datas: String?
 }
 
-class YJResponse<M: YJModelable> {
+public class YJResponse<M: YJModelable> {
     
-    var data: M?
-    var datas: [M?]?
-    var code: YJStatusCode = .unknown
-    var msg: String?
+    public var data: M?
+    public var datas: [M?]?
+    public var code: YJStatusCode = .unknown
+    public var msg: String?
     
-    var yj_mapping: YJMapping?
+    public var yj_mapping: YJMapping?
 }
 
-class YJNet {
-    class func request<M: YJModelable>(router: YJRouter, configMap: ((YJMapping)->Void)? = nil, completion: ((YJResponse<M>)->Void)?) {
+public class YJNet {
+    public class func request<M: YJModelable>(router: YJRouter, configMap: ((YJMapping)->Void)? = nil, completion: ((YJResponse<M>)->Void)?) {
         
         Alamofire.request(router).responseJSON(queue: DispatchQueue.global(), options: []) { (response: DataResponse<Any>) in
             let r = YJResponse<M>()

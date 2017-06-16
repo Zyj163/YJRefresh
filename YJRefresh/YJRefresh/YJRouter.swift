@@ -9,7 +9,7 @@
 import Alamofire
 
 //MARK: outer
-enum YJRouter {
+public enum YJRouter {
     static let baseURLString = "http://10.0.0.19:8080"
     
     case login(String, String)
@@ -20,7 +20,7 @@ enum YJRouter {
 //MARK: request
 extension YJRouter: URLRequestConvertible {
     
-    func asURLRequest() throws -> URLRequest {
+    public func asURLRequest() throws -> URLRequest {
         let url = try YJRouter.baseURLString.asURL()
         
         var urlRequest = URLRequest(url: url.appendingPathComponent(path))

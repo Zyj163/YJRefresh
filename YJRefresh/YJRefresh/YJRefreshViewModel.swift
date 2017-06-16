@@ -9,7 +9,7 @@
 import UIKit
 import HandyJSON
 
-protocol YJRefreshViewModelOwnerable: class {
+public protocol YJRefreshViewModelOwnerable: class {
     var tableView: UITableView? {get}
     var collectionView: UICollectionView? {get}
 }
@@ -19,18 +19,23 @@ extension YJRefreshViewModelOwnerable where Self: UIViewController {
     var collectionView: UICollectionView? {return nil}
 }
 
-protocol YJCellable {
+public protocol YJCellable {
     associatedtype ModelClass
     var model: ModelClass? {get set}
     
     var reuseIdentifier: String? {get}
 }
 
-protocol YJModelable: HandyJSON {
+public protocol YJModelable: HandyJSON {
     
 }
 
-class YJRefreshViewModel<M: YJModelable, C: UIView>: NSObject, UITableViewDataSource, UICollectionViewDataSource where C: YJCellable, C.ModelClass == M {
+public enum YJRefreshRowType {
+    case row
+    case section
+}
+
+public class YJRefreshViewModel<M: YJModelable, C: UIView>: NSObject, UITableViewDataSource, UICollectionViewDataSource where C: YJCellable, C.ModelClass == M {
     
     fileprivate let identify = "YJCell"
     
@@ -42,15 +47,17 @@ class YJRefreshViewModel<M: YJModelable, C: UIView>: NSObject, UITableViewDataSo
         super.init()
     }
     
-    func numberOfSections(in tableView: UITableView) -> Int {
-        return 1
+    public var refreshType: YJRefreshRowType = .row
+    
+    public func numberOfSections(in tableView: UITableView) -> Int {
+        return refreshType == .row ? 1 : datas.count
     }
     
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return datas.count
+    public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return refreshType == .section ? 1 : datas.count
     }
     
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         var cell = tableView.dequeueReusableCell(withIdentifier: identify, for: indexPath) as! C
         cell.model = datas[indexPath.row]
@@ -58,11 +65,11 @@ class YJRefreshViewModel<M: YJModelable, C: UIView>: NSObject, UITableViewDataSo
         return cell as! UITableViewCell
     }
     
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+    public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return datas.count
     }
     
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+    public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         var cell = collectionView.dequeueReusableCell(withReuseIdentifier: identify, for: indexPath) as! C
         cell.model = datas[indexPath.row]
         
@@ -75,9 +82,10 @@ class YJRefreshViewModel<M: YJModelable, C: UIView>: NSObject, UITableViewDataSo
 }
 
 extension YJRefreshViewModel {
-    convenience init<T: UIViewController>(_ owner: T) where T: YJRefreshViewModelOwnerable {
+    public convenience init<T: UIViewController>(_ owner: T, refreshType: YJRefreshRowType = .row) where T: YJRefreshViewModelOwnerable {
         self.init()
         
+        self.refreshType = refreshType
         self.owner = owner
         
         owner.tableView?.dataSource = self
@@ -87,29 +95,49 @@ extension YJRefreshViewModel {
         owner.collectionView?.register(C.self, forCellWithReuseIdentifier: identify)
     }
     
-    func refresh(_ start: Int = 0, configMap: ((YJMapping)->Void)? = nil, _ completion: ((YJResponse<M>)->())? = nil) {
-    
-        YJNet.request(router: .main(10), configMap: configMap, completion: { (response: YJResponse<M>) in
-            
-            switch response.code {
-                
-            case .success:
-                if let datas = response.datas {
-                    if start == 0 {
-                        self.datas.removeAll()
-                    }
-                    self.datas.append(contentsOf: datas)
-                    self.owner.tableView?.reloadData()
-                    self.owner.collectionView?.reloadData()
+    public func defalutDealWithResponse(_ start: Int = 0, response: YJResponse<M>) {
+        switch response.code {
+        case .success:
+            if let datas = response.datas {
+                if start == 0 {
+                    headerRefresh(datas)
+                    return
                 }
-                
-            default:
-                break
+                footerLoad(datas)
             }
+        default:
+            break
+        }
+    }
+    
+    public func headerRefresh(_ datas: [M?]) {
+        self.datas.removeAll()
+        self.datas.append(contentsOf: datas)
+        self.owner.tableView?.reloadData()
+        self.owner.collectionView?.reloadData()
+    }
+    
+    public func footerLoad(_ datas: [M?]) {
+        var indexPaths = [IndexPath]()
+        for i in 0..<datas.count {
+            let row = refreshType == .row ? i + datas.count - 1 : 0
+            let section = refreshType == .section ? i + datas.count - 1 : 0
+            let indexPath = IndexPath(row: row, section: section)
             
-            completion?(response)
-        })
+            indexPaths.append(indexPath)
+        }
         
+        let indexSet = IndexSet(integersIn: self.datas.count..<datas.count + self.datas.count)
+        
+        self.datas.append(contentsOf: datas)
+        
+        refreshType == .row ?
+            self.owner.tableView?.reloadRows(at: indexPaths, with: .fade) :
+            self.owner.tableView?.reloadSections(indexSet, with: .fade)
+        
+        refreshType == .row ?
+            self.owner.collectionView?.reloadItems(at: indexPaths) :
+            self.owner.collectionView?.reloadSections(indexSet)
     }
 }
 
